@@ -34,4 +34,130 @@
       <label for="scheme">URI-skjema</label>
       <select id="scheme">
         <option value="tel:">tel:</option>
-        <option value="sms:">sms:</
+        <option value="sms:">sms:</option>
+        <option value="whatsapp://send?phone=">whatsapp://send?phone=</option>
+        <option value="viber://chat?number=">viber://chat?number=</option>
+        <option value="tg://resolve?phone=">tg://resolve?phone=</option>
+        <option value="skype:">skype:</option>
+        <option value="callto:">callto:</option>
+
+        <!-- RIKTIG Windows-søk i Utforsker -->
+        <option value="search-ms:query=">search-ms:query= (Windows-søk/Utforsker)</option>
+
+        <!-- (valgfritt) Nettleserens «search:» åpner ofte web-søk, ikke app -->
+        <option value="search:query=">search:query= (web-søk)</option>
+
+        <option value="custom">Egendefinert …</option>
+      </select>
+    </div>
+
+    <div id="customBox" class="custom-box">
+      <label for="custom">Egendefinert URI-mønster (f.eks. myapp://do?value=)</label>
+      <input id="custom" type="text" placeholder="myapp://action?param=">
+      <button class="save" type="button" onclick="saveCustom()">Lagre som valg</button>
+    </div>
+
+    <div class="row">
+      <div class="preview" id="preview">URI preview…</div>
+    </div>
+
+    <div class="actions">
+      <button class="launch" type="button" onclick="launch()">Start</button>
+    </div>
+
+    <div id="saved" class="saved"></div>
+  </div>
+
+  <script>
+    const qs = new URLSearchParams(location.search);
+    const payloadEl = document.getElementById('payload');
+    const schemeEl  = document.getElementById('scheme');
+    const customEl  = document.getElementById('custom');
+    const previewEl = document.getElementById('preview');
+    const customBox = document.getElementById('customBox');
+    const savedBox  = document.getElementById('saved');
+    let saved = [];
+
+    // Støtt ?phone= eller ?q= som payload i URL
+    payloadEl.value = qs.get('phone') || qs.get('q') || '';
+
+    function buildURI() {
+      const p = payloadEl.value || '';
+      const s = schemeEl.value;
+      const c = customEl.value;
+
+      if (s === 'custom') return c ? (c + p) : '';
+      return s + p;
+    }
+
+    function updatePreview() {
+      const uri = buildURI();
+      previewEl.textContent = uri || 'Skriv inn payload…';
+    }
+
+    payloadEl.addEventListener('input', updatePreview);
+    customEl.addEventListener('input', updatePreview);
+    schemeEl.addEventListener('change', () => {
+      customBox.style.display = schemeEl.value === 'custom' ? 'block' : 'none';
+      updatePreview();
+    });
+
+    function saveCustom() {
+      const pattern = customEl.value.trim();
+      if (!pattern) return;
+      const name = prompt('Navn på dette valget:');
+      if (!name) return;
+      saved.push({ name, pattern });
+
+      // legg til i nedtrekk rett før "custom"
+      const opt = document.createElement('option');
+      opt.value = pattern;
+      opt.textContent = name;
+      schemeEl.insertBefore(opt, Array.from(schemeEl.options).find(o => o.value === 'custom'));
+      renderSaved();
+    }
+
+    function renderSaved() {
+      savedBox.innerHTML = '';
+      if (!saved.length) return;
+      const h = document.createElement('h3'); h.textContent = 'Lagret';
+      savedBox.appendChild(h);
+      saved.forEach((s, i) => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `<span>${s.name}: ${s.pattern}</span>
+                         <button class="delete" type="button" onclick="delSaved(${i})">Slett</button>`;
+        savedBox.appendChild(div);
+      });
+    }
+    function delSaved(i){ saved.splice(i,1); renderSaved(); }
+
+    // Viktig: trigge via brukergest + fallback
+    function launch() {
+      const uri = buildURI();
+      if (!uri) { alert('Fyll inn payload.'); return; }
+
+      // 1) Primær: klikk på temporært <a> (brukergest)
+      const a = document.createElement('a');
+      a.href = uri;
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      // 2) Fallback: skjult iframe (noen Chromium-versjoner ignorerer programmatisk navigasjon)
+      setTimeout(() => {
+        try {
+          const iframe = document.createElement('iframe');
+          iframe.style.display = 'none';
+          iframe.src = uri;
+          document.body.appendChild(iframe);
+          setTimeout(() => { document.body.removeChild(iframe); }, 2000);
+        } catch(e) {}
+      }, 0);
+    }
+
+    updatePreview();
+  </script>
+</body>
+</html>
