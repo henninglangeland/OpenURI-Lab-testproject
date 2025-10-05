@@ -1,0 +1,105 @@
+[
+  {
+    "id": "tel",
+    "name": "Ring (tel)",
+    "action": "Telefoni",
+    "uri": "tel:{payload}",
+    "description": "Ringer nummer via standardsamtale-app.",
+    "platforms": [
+      "any"
+    ]
+  },
+  {
+    "id": "sms",
+    "name": "SMS (sms)",
+    "action": "Meldinger",
+    "uri": "sms:{payload}?body={body}",
+    "description": "Åpner SMS med forhåndsutfylt melding.",
+    "platforms": [
+      "android",
+      "ios"
+    ]
+  },
+  {
+    "id": "mailto",
+    "name": "E‑post (mailto)",
+    "action": "E‑post",
+    "uri": "mailto:{payload}?subject={subject}&body={body}&cc={cc}&bcc={bcc}",
+    "description": "Åpner standard e‑postklient.",
+    "platforms": [
+      "any"
+    ]
+  },
+  {
+    "id": "search",
+    "name": "Windows Search (search:query=)",
+    "action": "System",
+    "uri": "search:query={query}",
+    "description": "Åpner Windows-søk med en spørring.",
+    "platforms": [
+      "windows"
+    ]
+  },
+  {
+    "id": "maps_apple",
+    "name": "Kart (Apple Maps)",
+    "action": "Kart",
+    "uri": "maps://?q={query}",
+    "description": "Åpner Apple Maps med søk.",
+    "platforms": [
+      "ios",
+      "mac"
+    ]
+  },
+  {
+    "id": "maps_geo",
+    "name": "Kart (geo:) Android",
+    "action": "Kart",
+    "uri": "geo:{lat},{lng}?q={label}",
+    "description": "Geo‑link for Android kartapps.",
+    "platforms": [
+      "android"
+    ]
+  },
+  {
+    "id": "whatsapp",
+    "name": "WhatsApp",
+    "action": "Meldinger",
+    "uri": "whatsapp://send?phone={payload}&text={body}",
+    "description": "Åpner WhatsApp chat.",
+    "platforms": [
+      "any"
+    ]
+  },
+  {
+    "id": "teams",
+    "name": "Microsoft Teams (deeplink)",
+    "action": "Møter",
+    "uri": "msteams://teams/",
+    "description": "Åpner Teams-appen (generisk).",
+    "platforms": [
+      "any"
+    ]
+  },
+  {
+    "id": "zoom_join",
+    "name": "Zoom – Join meeting",
+    "action": "Møter",
+    "uri": "zoommtg://zoom.us/join?action=join&confno={payload}&pwd={query}",
+    "description": "Bli med i Zoom med møte-ID (payload) og passord (query).",
+    "platforms": [
+      "any"
+    ]
+  },
+  {
+    "id": "vscode_file",
+    "name": "VS Code – Åpne fil",
+    "action": "Produktivitet",
+    "uri": "vscode://file/{payload}",
+    "description": "Åpne lokal fil i VS Code (krever app og riktige tillatelser).",
+    "platforms": [
+      "windows",
+      "mac"
+    ]
+  }
+]

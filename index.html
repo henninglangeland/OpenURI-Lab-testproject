@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>URI‑Verksted</title>
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <header>
+    <h1>URI‑Verksted</h1>
+    <p>Bygg, test og eksporter app-/protokoll‑URIer.</p>
+  </header>
+
+  <main>
+    <section class="panel">
+      <h2>1) Velg handling og protokoll/app</h2>
+      <div class="grid">
+        <label>
+          Handling
+          <select id="actionSelect"></select>
+        </label>
+        <label>
+          Protokoll / App
+          <select id="templateSelect"></select>
+        </label>
+        <label>
+          Egendefinert navn (visningsnavn)
+          <input id="customName" type="text" placeholder="f.eks. Ring med tel:" />
+        </label>
+        <label>
+          Egendefinert schema (valgfritt, overstyrer mal)
+          <input id="customScheme" type="text" placeholder="f.eks. myapp://open?x={payload}" />
+        </label>
+      </div>
+      <details>
+        <summary>Om valgt mal</summary>
+        <div id="templateInfo" class="muted"></div>
+      </details>
+    </section>
+
+    <section class="panel">
+      <h2>2) Fyll inn verdier</h2>
+      <div class="grid">
+        <label>Payload <input id="payload" type="text" placeholder="telefon, e‑post, søkestreng, osv." /></label>
+        <label>Subject <input id="subject" type="text" /></label>
+        <label>Body <input id="body" type="text" /></label>
+        <label>CC <input id="cc" type="text" /></label>
+        <label>BCC <input id="bcc" type="text" /></label>
+        <label>Query <input id="query" type="text" placeholder="søk eller kartlabel" /></label>
+        <label>Lat <input id="lat" type="text" placeholder="59.91" /></label>
+        <label>Lng <input id="lng" type="text" placeholder="10.75" /></label>
+        <label>Label <input id="label" type="text" placeholder="Oslo S" /></label>
+      </div>
+      <div class="row">
+        <label class="checkbox"><input id="encodeParams" type="checkbox" checked /> URL‑encode parametere</label>
+        <label class="checkbox"><input id="autorun" type="checkbox" /> Autorun ved lasting (med ?autorun=1)</label>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>3) Bygget URI</h2>
+      <div class="row">
+        <input id="builtUri" type="text" readonly />
+        <button id="copyBtn">Kopier</button>
+        <button id="runBtn">Kjør</button>
+      </div>
+      <div class="row tiny muted" id="hint"></div>
+    </section>
+
+    <section class="panel">
+      <h2>4) Snarveier & eksport</h2>
+      <div class="row">
+        <button id="addShortcutBtn">Legg til i mine snarveier</button>
+        <button id="clearShortcutsBtn">Tøm snarveier</button>
+      </div>
+      <div id="shortcuts" class="shortcuts"></div>
+
+      <div class="export">
+        <h3>Eksporter “ferdig” HTML for sluttbruker</h3>
+        <p>Eksporter en liten statisk side med dine snarveier. To moduser:</p>
+        <div class="grid">
+          <label class="checkbox"><input type="radio" name="exportMode" value="editable" checked /> Redigerbar input (bruker fyller payload/tekst)</label>
+          <label class="checkbox"><input type="radio" name="exportMode" value="fixed" /> Fastlåst (snapshot av feltene over – knapper åpner faste URIer)</label>
+        </div>
+        <div class="row">
+          <button id="exportBtn">Generer og last ned HTML</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Permalenke</h2>
+      <p>Delbar lenke som setter felter automatisk. Parametre: <code>action</code>, <code>template</code>, <code>payload</code>, <code>subject</code>, <code>body</code>, <code>cc</code>, <code>bcc</code>, <code>query</code>, <code>lat</code>, <code>lng</code>, <code>label</code>, <code>customName</code>, <code>customScheme</code>, <code>autorun</code>.</p>
+      <div class="row">
+        <input id="permalink" type="text" readonly />
+        <button id="copyPermalinkBtn">Kopier lenke</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <small>© 2025 URI‑Verksted • MIT‑lisens</small>
+  </footer>
+
+  <script src="js/helpers.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
