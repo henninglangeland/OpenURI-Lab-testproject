@@ -1,93 +1,194 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
-  <meta charset="utf-8">
-  <title>Launcher (search-ms & custom)</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <title>Auto URI Launcher</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body{font-family:system-ui,Arial,sans-serif;margin:40px;line-height:1.4}
-    .box{max-width:720px;margin:auto;border:1px solid #e5e7eb;border-radius:10px;padding:18px}
-    .uri{font-family:monospace;background:#f3f4f6;padding:10px;border-radius:6px;word-break:break-all}
-    .btn{display:inline-block;margin-top:10px;padding:10px 14px;border:0;border-radius:8px;cursor:pointer;background:#2563eb;color:#fff;text-decoration:none}
-    .sub{color:#6b7280;font-size:14px}
+    body { font-family: system-ui, Arial, sans-serif; margin: 24px; line-height: 1.4; }
+    .wrap { max-width: 700px; margin: 0 auto; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px; }
+    label { display:block; margin-top:10px; font-weight:600; }
+    input, select, button { padding:10px; font-size:14px; }
+    input, select { width:100%; box-sizing:border-box; }
+    .row { margin-top:8px; }
+    .uri { font-family: monospace; background:#f3f4f6; padding:10px; border-radius:6px; word-break:break-all; }
+    .btn { margin-top:10px; padding:10px 14px; border:0; border-radius:8px; cursor:pointer; background:#2563eb; color:#fff; }
+    .hint { color:#6b7280; font-size:13px; margin-top:6px; }
+    .inline { display:flex; gap:8px; align-items:center; }
+    .inline input { flex: 1; }
   </style>
 </head>
 <body>
-  <div class="box">
-    <h1>URI-launcher</h1>
-    <p class="sub">Støtter kun <strong>Windows-søk</strong> (<code>search-ms:query=</code>) og <strong>custom app-URI</strong>.</p>
+  <div class="wrap">
+    <h1>Auto URI Launcher</h1>
+    <p class="hint">Bruk <code>?payload=</code> (eller <code>?p=</code>) i URL-en. Standard skjema er <code>mailto:</code>. Du kan lagre egne skjema.</p>
 
-    <p><strong>Bygget URI:</strong></p>
-    <div id="uri" class="uri">—</div>
+    <div class="row">
+      <label for="payload">Payload</label>
+      <input id="payload" type="text" placeholder="f.eks. henning@test.no eller 47910303" />
+    </div>
 
-    <a id="openLink" class="btn" href="#" rel="noopener">Åpne nå</a>
-    <p class="sub">Siden forsøker også å starte automatisk ved lasting.</p>
+    <div class="row">
+      <label for="schemeSelect">Skjema (URI-mønster)</label>
+      <select id="schemeSelect"></select>
+      <div class="hint">Tips: Bruk <code>{payload}</code> som plassholder. Hvis ikke brukt, legges payload på slutten.</div>
+    </div>
+
+    <div class="row">
+      <div class="inline">
+        <input id="customPattern" type="text" placeholder="f.eks. mailto:{payload}@test.com eller myapp://lookup?id=" />
+        <input id="customName" type="text" placeholder="Navn (valgfritt)" style="max-width: 220px;" />
+      </div>
+      <button id="saveBtn" class="btn" style="background:#16a34a;">Lagre som nytt skjema</button>
+      <div class="hint">Lagrer i nettleserens <code>localStorage</code>.</div>
+    </div>
+
+    <div class="row">
+      <label>Bygget URI</label>
+      <div id="preview" class="uri">—</div>
+      <button id="openBtn" class="btn">Åpne nå</button>
+      <div class="hint">Siden forsøker også å åpne automatisk ved lasting hvis payload er gitt i URL.</div>
+    </div>
   </div>
 
   <script>
     (function(){
-      const qs = new URLSearchParams(location.search);
+      const DEFAULTS = [
+        { name: "mailto:", pattern: "mailto:" }
+      ];
 
-      // Input-varianter:
-      // 1) Windows-søk:   ?q=VERDI
-      // 2) Custom app:     ?scheme=MYAPP_PREFIX&payload=VERDI
-      //    (prefix eksempel: myapp://lookup?num=)
-      //
-      // Alternativt kan du tvinge Windows-søk via scheme:
-      //    ?scheme=search-ms:query=&payload=VERDI
+      const lsKey = "simple-uri-schemes";
+      const lsDefaultKey = "simple-uri-default"; // lagrer valgt standard pattern-streng
 
-      const q       = qs.get('q');
-      const schemeQ = qs.get('scheme');
-      const payload = qs.get('payload');
+      const $payload = document.getElementById('payload');
+      const $select  = document.getElementById('schemeSelect');
+      const $custom  = document.getElementById('customPattern');
+      const $cname   = document.getElementById('customName');
+      const $preview = document.getElementById('preview');
+      const $open    = document.getElementById('openBtn');
+      const $save    = document.getElementById('saveBtn');
 
-      let uri = '';
-
-      if (q && !schemeQ) {
-        // Ren Windows-søk med ?q=
-        uri = 'search-ms:query=' + encodeURIComponent(q);
-      } else if (schemeQ && (payload ?? '') !== '') {
-        // Custom (eller eksplisitt search-ms via scheme)
-        // NB: scheme antas å være et prefiks som vi bare legger verdien etter.
-        // Vi URL-koder payloaden, siden mange apps tåler/forventer det i query.
-        uri = schemeQ + encodeURIComponent(payload);
-      } else {
-        // Ingenting å bygge
-        uri = '';
+      // Hent/lagre i localStorage
+      function loadSchemes(){
+        try {
+          const raw = localStorage.getItem(lsKey);
+          const arr = raw ? JSON.parse(raw) : [];
+          // sørg for at mailto: alltid finnes som første
+          const merged = [...DEFAULTS];
+          arr.forEach(x => {
+            if (!merged.find(m => m.pattern === x.pattern)) merged.push(x);
+          });
+          return merged;
+        } catch { return [...DEFAULTS]; }
+      }
+      function saveSchemes(list){
+        localStorage.setItem(lsKey, JSON.stringify(list.filter(x => x.pattern !== "mailto:")));
+      }
+      function loadDefaultPattern(){
+        return localStorage.getItem(lsDefaultKey) || "mailto:";
+      }
+      function saveDefaultPattern(pattern){
+        localStorage.setItem(lsDefaultKey, pattern);
       }
 
-      // Vis i UI
-      const uriEl = document.getElementById('uri');
-      uriEl.textContent = uri || 'Mangler parametere. Bruk ?q=… eller ?scheme=…&payload=…';
+      let schemes = loadSchemes();
 
-      // Sett opp manuell lenke
-      const openLink = document.getElementById('openLink');
-      if (uri) openLink.href = uri; else openLink.removeAttribute('href');
+      function fillSelect(selectedPattern){
+        $select.innerHTML = "";
+        schemes.forEach(sc => {
+          const opt = document.createElement('option');
+          opt.value = sc.pattern;
+          opt.textContent = sc.name || sc.pattern;
+          if (sc.pattern === selectedPattern) opt.selected = true;
+          $select.appendChild(opt);
+        });
+      }
 
-      // Auto-launch med klikk-simulering + iframe fallback
-      function autoLaunch(targetUri){
-        if (!targetUri) return;
+      function buildURI(pattern, payload){
+        if (!payload || !pattern) return "";
+        const encoded = encodeURIComponent(payload);
+        if (pattern.includes("{payload}")) {
+          return pattern.replaceAll("{payload}", encoded);
+        }
+        return pattern + encoded;
+      }
 
-        // 1) Simulert klikk på <a> (best sjanse i Chromium/Edge)
+      function updatePreview(){
+        const uri = buildURI($select.value, $payload.value.trim());
+        $preview.textContent = uri || "—";
+      }
+
+      function attemptOpen(uri){
+        if (!uri) return;
+        // 1) Simulert klikk på <a> (gir best sjanse i Chromium/Edge)
         const a = document.createElement('a');
-        a.href = targetUri;
+        a.href = uri;
         a.rel = 'noopener';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
 
-        // 2) Fallback: skjult iframe
+        // 2) Fallback via skjult iframe
         setTimeout(() => {
           try {
             const iframe = document.createElement('iframe');
             iframe.style.display = 'none';
-            iframe.src = targetUri;
+            iframe.src = uri;
             document.body.appendChild(iframe);
             setTimeout(() => { document.body.removeChild(iframe); }, 1500);
-          } catch(e) {/* ignorer */}
+          } catch(e){}
         }, 0);
       }
 
-      // Start automatisk på load
-      autoLaunch(uri);
+      // Init fra URL
+      const qs = new URLSearchParams(location.search);
+      const payloadFromUrl = qs.get('payload') || qs.get('p') || "";
+      const schemeFromUrl  = qs.get('scheme'); // valgfritt
+      $payload.value = payloadFromUrl;
+
+      const defaultPattern = schemeFromUrl || loadDefaultPattern();
+      fillSelect(defaultPattern);
+      updatePreview();
+
+      // Auto-launch hvis payload finnes
+      if ($payload.value) {
+        const uri = buildURI($select.value, $payload.value.trim());
+        attemptOpen(uri);
+      }
+
+      // UI events
+      $payload.addEventListener('input', updatePreview);
+      $select.addEventListener('change', () => {
+        saveDefaultPattern($select.value);
+        updatePreview();
+      });
+
+      $open.addEventListener('click', () => {
+        const uri = buildURI($select.value, $payload.value.trim());
+        updatePreview();
+        attemptOpen(uri);
+      });
+
+      $save.addEventListener('click', () => {
+        const pattern = ($custom.value || "").trim();
+        if (!pattern) return alert("Skriv inn et mønster først.");
+        const name = ($cname.value || pattern).trim();
+
+        // Hvis samme pattern allerede finnes, bare oppdater navn
+        const existing = schemes.find(s => s.pattern === pattern);
+        if (existing) {
+          existing.name = name;
+        } else {
+          schemes.push({ name, pattern });
+        }
+        saveSchemes(schemes);
+        fillSelect(pattern);
+        saveDefaultPattern(pattern);
+        updatePreview();
+        $custom.value = "";
+        $cname.value = "";
+      });
     })();
-  <
+  </script>
+</body>
+</html>
