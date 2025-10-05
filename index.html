@@ -1,163 +1,93 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8">
+  <title>Launcher (search-ms & custom)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>URI Launcher</title>
   <style>
-    body{font-family:Arial, sans-serif;max-width:700px;margin:40px auto;padding:20px;background:#f5f5f5}
-    .container{background:#fff;padding:24px;border-radius:10px;box-shadow:0 2px 8px rgba(0,0,0,.08)}
-    .row{margin-bottom:14px}
-    label{font-weight:600;margin-bottom:6px;display:block}
-    input,select,button{padding:10px;border:1px solid #ddd;border-radius:6px;font-size:14px}
-    input,select{width:100%}
-    .preview{font-family:monospace;background:#f0f0f0;padding:10px;border-radius:6px;word-break:break-all}
-    .actions{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
-    .launch{background:#2e7d32;color:#fff;border:none;cursor:pointer}
-    .save{background:#1565c0;color:#fff;border:none;cursor:pointer}
-    .delete{background:#c62828;color:#fff;border:none;cursor:pointer;padding:6px 10px}
-    .custom-box{display:none;background:#fff7d6;border:1px dashed #e0c463;padding:12px;border-radius:8px}
-    .saved{margin-top:14px}
-    .item{background:#eef2f7;padding:8px;border-radius:6px;display:flex;justify-content:space-between;align-items:center;margin-top:6px}
+    body{font-family:system-ui,Arial,sans-serif;margin:40px;line-height:1.4}
+    .box{max-width:720px;margin:auto;border:1px solid #e5e7eb;border-radius:10px;padding:18px}
+    .uri{font-family:monospace;background:#f3f4f6;padding:10px;border-radius:6px;word-break:break-all}
+    .btn{display:inline-block;margin-top:10px;padding:10px 14px;border:0;border-radius:8px;cursor:pointer;background:#2563eb;color:#fff;text-decoration:none}
+    .sub{color:#6b7280;font-size:14px}
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>URI Launcher</h1>
+  <div class="box">
+    <h1>URI-launcher</h1>
+    <p class="sub">Støtter kun <strong>Windows-søk</strong> (<code>search-ms:query=</code>) og <strong>custom app-URI</strong>.</p>
 
-    <div class="row">
-      <label for="payload">Payload (f.eks. telefonnummer eller søkestreng)</label>
-      <input id="payload" type="text" placeholder="47910303">
-    </div>
+    <p><strong>Bygget URI:</strong></p>
+    <div id="uri" class="uri">—</div>
 
-    <div class="row">
-      <label for="scheme">URI-skjema</label>
-      <select id="scheme">
-        <option value="tel:">tel:</option>
-        <option value="sms:">sms:</option>
-        <option value="whatsapp://send?phone=">whatsapp://send?phone=</option>
-        <option value="viber://chat?number=">viber://chat?number=</option>
-        <option value="tg://resolve?phone=">tg://resolve?phone=</option>
-        <option value="skype:">skype:</option>
-        <option value="callto:">callto:</option>
-
-        <!-- RIKTIG Windows-søk i Utforsker -->
-        <option value="search-ms:query=">search-ms:query= (Windows-søk/Utforsker)</option>
-
-        <!-- (valgfritt) Nettleserens «search:» åpner ofte web-søk, ikke app -->
-        <option value="search:query=">search:query= (web-søk)</option>
-
-        <option value="custom">Egendefinert …</option>
-      </select>
-    </div>
-
-    <div id="customBox" class="custom-box">
-      <label for="custom">Egendefinert URI-mønster (f.eks. myapp://do?value=)</label>
-      <input id="custom" type="text" placeholder="myapp://action?param=">
-      <button class="save" type="button" onclick="saveCustom()">Lagre som valg</button>
-    </div>
-
-    <div class="row">
-      <div class="preview" id="preview">URI preview…</div>
-    </div>
-
-    <div class="actions">
-      <button class="launch" type="button" onclick="launch()">Start</button>
-    </div>
-
-    <div id="saved" class="saved"></div>
+    <a id="openLink" class="btn" href="#" rel="noopener">Åpne nå</a>
+    <p class="sub">Siden forsøker også å starte automatisk ved lasting.</p>
   </div>
 
   <script>
-    const qs = new URLSearchParams(location.search);
-    const payloadEl = document.getElementById('payload');
-    const schemeEl  = document.getElementById('scheme');
-    const customEl  = document.getElementById('custom');
-    const previewEl = document.getElementById('preview');
-    const customBox = document.getElementById('customBox');
-    const savedBox  = document.getElementById('saved');
-    let saved = [];
+    (function(){
+      const qs = new URLSearchParams(location.search);
 
-    // Støtt ?phone= eller ?q= som payload i URL
-    payloadEl.value = qs.get('phone') || qs.get('q') || '';
+      // Input-varianter:
+      // 1) Windows-søk:   ?q=VERDI
+      // 2) Custom app:     ?scheme=MYAPP_PREFIX&payload=VERDI
+      //    (prefix eksempel: myapp://lookup?num=)
+      //
+      // Alternativt kan du tvinge Windows-søk via scheme:
+      //    ?scheme=search-ms:query=&payload=VERDI
 
-    function buildURI() {
-      const p = payloadEl.value || '';
-      const s = schemeEl.value;
-      const c = customEl.value;
+      const q       = qs.get('q');
+      const schemeQ = qs.get('scheme');
+      const payload = qs.get('payload');
 
-      if (s === 'custom') return c ? (c + p) : '';
-      return s + p;
-    }
+      let uri = '';
 
-    function updatePreview() {
-      const uri = buildURI();
-      previewEl.textContent = uri || 'Skriv inn payload…';
-    }
+      if (q && !schemeQ) {
+        // Ren Windows-søk med ?q=
+        uri = 'search-ms:query=' + encodeURIComponent(q);
+      } else if (schemeQ && (payload ?? '') !== '') {
+        // Custom (eller eksplisitt search-ms via scheme)
+        // NB: scheme antas å være et prefiks som vi bare legger verdien etter.
+        // Vi URL-koder payloaden, siden mange apps tåler/forventer det i query.
+        uri = schemeQ + encodeURIComponent(payload);
+      } else {
+        // Ingenting å bygge
+        uri = '';
+      }
 
-    payloadEl.addEventListener('input', updatePreview);
-    customEl.addEventListener('input', updatePreview);
-    schemeEl.addEventListener('change', () => {
-      customBox.style.display = schemeEl.value === 'custom' ? 'block' : 'none';
-      updatePreview();
-    });
+      // Vis i UI
+      const uriEl = document.getElementById('uri');
+      uriEl.textContent = uri || 'Mangler parametere. Bruk ?q=… eller ?scheme=…&payload=…';
 
-    function saveCustom() {
-      const pattern = customEl.value.trim();
-      if (!pattern) return;
-      const name = prompt('Navn på dette valget:');
-      if (!name) return;
-      saved.push({ name, pattern });
+      // Sett opp manuell lenke
+      const openLink = document.getElementById('openLink');
+      if (uri) openLink.href = uri; else openLink.removeAttribute('href');
 
-      // legg til i nedtrekk rett før "custom"
-      const opt = document.createElement('option');
-      opt.value = pattern;
-      opt.textContent = name;
-      schemeEl.insertBefore(opt, Array.from(schemeEl.options).find(o => o.value === 'custom'));
-      renderSaved();
-    }
+      // Auto-launch med klikk-simulering + iframe fallback
+      function autoLaunch(targetUri){
+        if (!targetUri) return;
 
-    function renderSaved() {
-      savedBox.innerHTML = '';
-      if (!saved.length) return;
-      const h = document.createElement('h3'); h.textContent = 'Lagret';
-      savedBox.appendChild(h);
-      saved.forEach((s, i) => {
-        const div = document.createElement('div');
-        div.className = 'item';
-        div.innerHTML = `<span>${s.name}: ${s.pattern}</span>
-                         <button class="delete" type="button" onclick="delSaved(${i})">Slett</button>`;
-        savedBox.appendChild(div);
-      });
-    }
-    function delSaved(i){ saved.splice(i,1); renderSaved(); }
+        // 1) Simulert klikk på <a> (best sjanse i Chromium/Edge)
+        const a = document.createElement('a');
+        a.href = targetUri;
+        a.rel = 'noopener';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
 
-    // Viktig: trigge via brukergest + fallback
-    function launch() {
-      const uri = buildURI();
-      if (!uri) { alert('Fyll inn payload.'); return; }
+        // 2) Fallback: skjult iframe
+        setTimeout(() => {
+          try {
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = targetUri;
+            document.body.appendChild(iframe);
+            setTimeout(() => { document.body.removeChild(iframe); }, 1500);
+          } catch(e) {/* ignorer */}
+        }, 0);
+      }
 
-      // 1) Primær: klikk på temporært <a> (brukergest)
-      const a = document.createElement('a');
-      a.href = uri;
-      a.rel = 'noopener';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-
-      // 2) Fallback: skjult iframe (noen Chromium-versjoner ignorerer programmatisk navigasjon)
-      setTimeout(() => {
-        try {
-          const iframe = document.createElement('iframe');
-          iframe.style.display = 'none';
-          iframe.src = uri;
-          document.body.appendChild(iframe);
-          setTimeout(() => { document.body.removeChild(iframe); }, 2000);
-        } catch(e) {}
-      }, 0);
-    }
-
-    updatePreview();
-  </script>
-</body>
-</html>
+      // Start automatisk på load
+      autoLaunch(uri);
+    })();
+  <
