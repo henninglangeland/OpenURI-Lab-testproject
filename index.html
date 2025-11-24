@@ -21,7 +21,7 @@
 <body>
   <div class="wrap">
     <h1>Auto URI Launcher</h1>
-    <p class="hint">Bruk <code>?payload=</code> (eller <code>?p=</code>) i URL-en. Standard skjema er <code>mailto:</code>. Du kan lagre egne skjema.</p>
+    <p class="hint">Bruk <code>?payload=</code> (eller <code>?p=</code>) i URL-en. Standard skjema er <code>TLF:</code>. Du kan lagre egne skjema.</p>
 
     <div class="row">
       <label for="payload">Payload</label>
@@ -54,7 +54,7 @@
   <script>
     (function(){
       const DEFAULTS = [
-        { name: "mailto:", pattern: "mailto:" }
+        { name: "Innkommende telefon", pattern: "TLF:" }
       ];
 
       const lsKey = "simple-uri-schemes";
@@ -82,10 +82,10 @@
         } catch { return [...DEFAULTS]; }
       }
       function saveSchemes(list){
-        localStorage.setItem(lsKey, JSON.stringify(list.filter(x => x.pattern !== "mailto:")));
+        localStorage.setItem(lsKey, JSON.stringify(list.filter(x => x.pattern !== "TLF:")));
       }
       function loadDefaultPattern(){
-        return localStorage.getItem(lsDefaultKey) || "mailto:";
+        return localStorage.getItem(lsDefaultKey) || "TLF:";
       }
       function saveDefaultPattern(pattern){
         localStorage.setItem(lsDefaultKey, pattern);
