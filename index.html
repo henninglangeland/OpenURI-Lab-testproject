@@ -21,11 +21,11 @@
 <body>
   <div class="wrap">
     <h1>Auto URI Launcher</h1>
-    <p class="hint">Bruk <code>?payload=</code> (eller <code>?p=</code>) i URL-en. Standard skjema er <code>TLF:</code>. Du kan lagre egne skjema.</p>
+    <p class="hint">Bruk <code>?payload=</code> (eller <code>?p=</code>) i URL-en. Standard skjema er <code>tlf:</code>. Du kan lagre dine egne skjema.</p>
 
     <div class="row">
       <label for="payload">Payload</label>
-      <input id="payload" type="text" placeholder="f.eks. henning@test.no eller 47910303" />
+      <input id="payload" type="text" placeholder="f.eks. 47910303" />
     </div>
 
     <div class="row">
@@ -36,7 +36,7 @@
 
     <div class="row">
       <div class="inline">
-        <input id="customPattern" type="text" placeholder="f.eks. mailto:{payload}@test.com eller myapp://lookup?id=" />
+        <input id="customPattern" type="text" placeholder="f.eks. tlf:{payload} eller myapp://lookup?id=" />
         <input id="customName" type="text" placeholder="Navn (valgfritt)" style="max-width: 220px;" />
       </div>
       <button id="saveBtn" class="btn" style="background:#16a34a;">Lagre som nytt skjema</button>
@@ -54,7 +54,7 @@
   <script>
     (function(){
       const DEFAULTS = [
-        { name: "Innkommende telefon", pattern: "TLF:" }
+        { name: "tlf:", pattern: "tlf:" }
       ];
 
       const lsKey = "simple-uri-schemes";
@@ -73,7 +73,7 @@
         try {
           const raw = localStorage.getItem(lsKey);
           const arr = raw ? JSON.parse(raw) : [];
-          // sørg for at mailto: alltid finnes som første
+          // sørg for at tlf: alltid finnes som første
           const merged = [...DEFAULTS];
           arr.forEach(x => {
             if (!merged.find(m => m.pattern === x.pattern)) merged.push(x);
@@ -82,10 +82,10 @@
         } catch { return [...DEFAULTS]; }
       }
       function saveSchemes(list){
-        localStorage.setItem(lsKey, JSON.stringify(list.filter(x => x.pattern !== "TLF:")));
+        localStorage.setItem(lsKey, JSON.stringify(list.filter(x => x.pattern !== "tlf:")));
       }
       function loadDefaultPattern(){
-        return localStorage.getItem(lsDefaultKey) || "TLF:";
+        return localStorage.getItem(lsDefaultKey) || "tlf:";
       }
       function saveDefaultPattern(pattern){
         localStorage.setItem(lsDefaultKey, pattern);
