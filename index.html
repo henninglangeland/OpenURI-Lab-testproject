@@ -21,9 +21,13 @@
 <body>
   <div class="wrap">
     <h1>Auto URI Launcher</h1>
-    <p class="hint">Bruk <code>?payload=</code> (eller <code>?p=</code>) i URL-en. Standard skjema er <code>tlf:</code>. Du kan lagre dine egne skjema.
+    <p class="hint">For bruk i BN Sentralbord, legg inn følgende i BN-GUI: 
 <br>
-For bruk i BN Sentralbord, legg inn: https://henninglangeland.github.io/OpenURI-Lab-testproject/index.html?p=${caller}
+https://henninglangeland.github.io/OpenURI-Lab-testproject/index.html?p=${caller}
+<br>Tips for annen bruk: Bruk <code>?payload=</code> (eller <code>?p=</code>) i URL-en. Standard skjema er <code>tlf:</code>. 
+<br>
+Du kan også lagre dine egne skjema.
+<br>
 
 </p>
 
@@ -33,22 +37,22 @@ For bruk i BN Sentralbord, legg inn: https://henninglangeland.github.io/OpenURI-
     </div>
 
     <div class="row">
-      <label for="schemeSelect">Skjema (URI-mønster)</label>
+      <label for="schemeSelect">Velg skjema (URI-mønster):</label>
       <select id="schemeSelect"></select>
-      <div class="hint">Hvis du har andre behov: Under kan du lage egendefinerte URI-skjemaer. <br> Tips: Bruk <code>{payload}</code> som plassholder. Hvis ikke brukt, legges payload på slutten.</div>
+      <div class="hint">Hvis du har spesifikke behov: Under kan du lage egendefinerte URI-skjemaer. <br> Tips: Bruk <code>{payload}</code> som plassholder. Hvis ikke brukt, legges payload på slutten.</div>
     </div>
 
     <div class="row">
       <div class="inline">
         <input id="customPattern" type="text" placeholder="Legg inn URI'en du vil bruke her. f.eks en av følgende: tlf: tel: mailto:" />
-        <input id="customName" type="text" placeholder="Gi den et navn (valgfritt)" style="max-width: 220px;" />
+        <input id="customName" type="text" placeholder="Gi skjemaet ditt et navn (valgfritt)" style="max-width: 220px;" />
       </div>
       <button id="saveBtn" class="btn" style="background:#16a34a;">Lagre som nytt skjema</button>
       <div class="hint">Lagrer i nettleserens <code>localStorage</code>.</div>
     </div>
 
     <div class="row">
-      <label>Bygget URI</label>
+      <label>Slik ser URI'en som åpnes ut:</label>
       <div id="preview" class="uri">—</div>
       <button id="openBtn" class="btn">Åpne nå</button>
       <div class="hint">Siden forsøker også å åpne automatisk ved lasting hvis payload er gitt i URL.</div>
